@@ -14,8 +14,7 @@ RUN microdnf update -y && \
     microdnf install -y nginx shadow-utils && \
     microdnf clean all
 
-# Create non-root user
-RUN useradd -u 1001 -r -g 0 -s /sbin/nologin -c "Nginx user" nginx
+# the nginx user will get created when you install nginx in the above step
 
 # Set up directories and permissions
 RUN mkdir -p /var/log/nginx && \
@@ -34,7 +33,7 @@ COPY --chown=nginx:root nginx.conf /etc/nginx/nginx.conf
 EXPOSE 8080
 
 # Switch to non-root user
-USER 1001
+USER nginx
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
