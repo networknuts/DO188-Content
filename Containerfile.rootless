@@ -1,0 +1,40 @@
+# Use UBI8 minimal as base image
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+# Set up environment variables
+ENV NGINX_VERSION=1.20 \
+    NGINX_HOME=/usr/share/nginx \
+    PATH=$PATH:/usr/sbin
+
+# Switch to root temporarily for installation
+USER root
+
+# Install nginx and necessary packages
+RUN microdnf update -y && \
+    microdnf install -y nginx shadow-utils && \
+    microdnf clean all
+
+# Create non-root user
+RUN useradd -u 1001 -r -g 0 -s /sbin/nologin -c "Nginx user" nginx
+
+# Set up directories and permissions
+RUN mkdir -p /var/log/nginx && \
+    mkdir -p /var/lib/nginx/tmp && \
+    chown -R nginx:root /var/log/nginx && \
+    chown -R nginx:root /var/lib/nginx && \
+    chown -R nginx:root /usr/share/nginx && \
+    chmod -R g+rwX /var/log/nginx && \
+    chmod -R g+rwX /var/lib/nginx && \
+    chmod -R g+rwX /usr/share/nginx
+
+# Copy nginx configuration
+COPY --chown=nginx:root nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 8080 (non-privileged port)
+EXPOSE 8080
+
+# Switch to non-root user
+USER 1001
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
